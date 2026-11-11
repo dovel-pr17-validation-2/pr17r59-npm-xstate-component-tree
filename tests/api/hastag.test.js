@@ -1,0 +1,64 @@
+import { describe, it, afterEach } from "node:test";
+import assert from "node:assert/strict";
+
+import { createTree } from "../util/trees.js";
+import { treeTeardown } from "../util/context.js";
+
+import single from "./specimens/single.js";
+import child from "./specimens/child.js";
+import noComponents from "./specimens/no-components.js";
+
+describe("hasTag", () => {
+    afterEach(treeTeardown);
+
+    it("should check the root tree", async (context) => {
+        const tree = context.tree = createTree(single);
+        let { extra } = await tree();
+
+        assert.ok(tree.builder.hasTag("one"));
+        assert.ok(!tree.builder.hasTag("two"));
+        assert.ok(extra.hasTag("one"));
+        assert.ok(!extra.hasTag("two"));
+
+        tree.service.send({ type : "NEXT" });
+        ({ extra } = await tree());
+
+        assert.ok(tree.builder.hasTag("two"));
+        assert.ok(extra.hasTag("two"));
+    });
+
+    it("should check child trees", async (context) => {
+        const tree = context.tree = createTree(child);
+        const { extra } = await tree();
+
+        assert.ok(tree.builder.hasTag("one"));
+        assert.ok(tree.builder.hasTag("child-one"));
+        assert.ok(extra.hasTag("one"));
+        assert.ok(extra.hasTag("child-one"));
+    });
+
+    it("should work without components", async (context) => {
+        const tree = context.tree = createTree(noComponents);
+        let { extra } = await tree();
+
+        assert.ok(tree.builder.hasTag("one"));
+        assert.ok(extra.hasTag("one"));
+
+        tree.service.send({ type : "NEXT" });
+        ({ extra } = await tree());
+
+        assert.ok(tree.builder.hasTag("two"));
+        assert.ok(extra.hasTag("two"));
+    });
+
+    it("shouldn't explode after teardown", async () => {
+        const tree = createTree(single);
+
+        const { extra } = await tree();
+
+        tree.builder.teardown();
+
+        assert.equal(tree.builder.hasTag("one"), false);
+        assert.equal(extra.hasTag("one"), false);
+    });
+});

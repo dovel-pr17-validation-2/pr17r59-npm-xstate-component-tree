@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "module": "nodenext",
+        "allowJs": true,
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        "noEmit": false,
+        "moduleResolution": "nodenext",
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "skipLibCheck": true,
+    },
+    "include": [
+        "src/**/*.js"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

@@ -1,0 +1,10 @@
+{
+    "xstate.showVisualEditorWarnings": false,
+
+    // Javascript
+    "[javascript]": {
+        "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": "explicit"
+        },
+    },
+}

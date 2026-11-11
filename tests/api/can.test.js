@@ -1,0 +1,66 @@
+import { describe, it, afterEach } from "node:test";
+import assert from "node:assert/strict";
+
+import { createTree } from "../util/trees.js";
+import { treeTeardown } from "../util/context.js";
+
+import single from "./specimens/single.js";
+import child from "./specimens/child.js";
+import noComponents from "./specimens/no-components.js";
+
+describe("can", () => {
+    afterEach(treeTeardown);
+
+    it("should check the root tree", async (context) => {
+        const tree = context.tree = createTree(single);
+        let { extra } = await tree();
+
+        assert.ok(tree.builder.can({ type : "NEXT" }));
+        assert.ok(extra.can({ type : "NEXT" }));
+        assert.ok(!tree.builder.can({ type : "NOPE" }));
+        assert.ok(!extra.can({ type : "NOPE" }));
+
+        tree.service.send({ type : "NEXT" });
+        ({ extra } = await tree());
+
+        assert.ok(tree.builder.can({ type : "NEXT" }));
+        assert.ok(extra.can({ type : "NEXT" }));
+        assert.ok(!tree.builder.can({ type : "NOPE" }));
+        assert.ok(!extra.can({ type : "NOPE" }));
+    });
+
+    it("should check child trees", async (context) => {
+        const tree = context.tree = createTree(child);
+        const { extra } = await tree();
+
+        assert.ok(tree.builder.can({ type : "NEXT" }));
+        assert.ok(tree.builder.can({ type : "CHILD_NEXT" }));
+        assert.ok(extra.can({ type : "NEXT" }));
+        assert.ok(extra.can({ type : "CHILD_NEXT" }));
+    });
+
+    it("should work without components", async (context) => {
+        const tree = context.tree = createTree(noComponents);
+        let { extra } = await tree();
+
+        assert.ok(tree.builder.can({ type : "NEXT" }));
+        assert.ok(extra.can({ type : "NEXT" }));
+
+        tree.service.send({ type : "NEXT" });
+        ({ extra } = await tree());
+
+        assert.ok(tree.builder.can({ type : "NEXT" }));
+        assert.ok(extra.can({ type : "NEXT" }));
+    });
+
+    it("shouldn't explode after teardown", async () => {
+        const tree = createTree(noComponents);
+
+        const { extra } = await tree();
+
+        tree.builder.teardown();
+
+        assert.equal(tree.builder.can({ type : "NEXT" }), false);
+        assert.equal(extra.can({ type : "NEXT" }), false);
+    });
+});
